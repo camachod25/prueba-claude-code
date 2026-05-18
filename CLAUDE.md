@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-**PENTA · AI Snippet Organizer** — a hi-fi interactive mockup for the PENTA company (software solutions, users are developers and data analysts). The frontend is a no-build prototype; the backend (FastAPI/Python) is not yet implemented.
+**PENTA · AI Snippet Organizer** — a hi-fi interactive mockup for the PENTA company (software solutions, users are developers and data analysts). The frontend is a no-build prototype; the backend is FastAPI + SQLAlchemy async, structured with clean/hexagonal architecture.
 
 ## Running the frontend
 
@@ -72,9 +72,7 @@ Screens are defined in `screens.jsx` and registered in the `switch` inside `Pent
 
 All UI strings come from `window.PENTA.I18N[ui.lang]` (passed as `t` to every component). Both `es` and `en` keys must be kept in sync in `data.js` when adding strings.
 
-## Backend (not yet implemented)
-
-`backend/` is empty. Planned stack: **FastAPI** (Python). When implemented:
+## Running the backend
 
 ```bash
 cd backend
@@ -84,3 +82,84 @@ pip install -r requirements.txt
 uvicorn main:app --reload   # http://localhost:8000
 # API docs: http://localhost:8000/docs
 ```
+
+Run tests:
+
+```bash
+cd backend
+pytest                          # all tests
+pytest tests/unit               # unit only
+pytest tests/unit/use_cases/test_create_snippet.py  # single file
+```
+
+## Backend architecture
+
+The backend follows **clean architecture with hexagonal (ports & adapters)** style. The dependency rule flows inward: `infrastructure` → `application` → `domain`. The domain has zero external dependencies.
+
+```
+backend/
+├── src/
+│   ├── domain/          # pure business logic — no framework imports
+│   ├── application/     # orchestration: ports, use_cases, dtos
+│   └── infrastructure/  # adapters: FastAPI, SQLAlchemy, config
+└── tests/
+    ├── unit/            # mock the repository, test logic only
+    └── integration/     # test against the real API
+```
+
+### Domain layer (`src/domain/`)
+
+Contains entities, value objects, and domain exceptions. No imports from `application` or `infrastructure`.
+
+- **`entities/snippet.py`** — `Snippet` dataclass with domain methods: `update_body()` (increments `version`), `toggle_favorite()`, `increment_use_count()`, `share_with()`. All mutations go through these methods, never direct field assignment.
+- **`value_objects/snippet_type.py`** — `SnippetType` str enum: `PROMPT | CODE | TEXT`.
+- **`exceptions/domain_exceptions.py`** — `SnippetNotFound`, `UnauthorizedAccess`, `FolderNotFound`. Raised by use cases, caught and mapped to HTTP status codes in the router.
+
+### Application layer (`src/application/`)
+
+#### Ports
+
+- **`ports/input/snippet_service_port.py`** — `ISnippetService` ABC: the interface the driving adapter (router) talks to.
+- **`ports/output/snippet_repository_port.py`** — `ISnippetRepository` ABC: the interface use cases depend on; implemented in infrastructure. To swap databases, only write a new implementation of this ABC.
+
+#### Use cases (`use_cases/snippet/`)
+
+One class per action, injected with `ISnippetRepository`. Each exposes a single `async execute(...)` method:
+
+| File | Responsibility |
+|---|---|
+| `create_snippet.py` | Builds `Snippet` entity; auto-extracts `{{variables}}` from body via regex |
+| `get_snippet.py` | Checks ownership/sharing; calls `increment_use_count()` |
+| `list_snippets.py` | Delegates filtering to repository; applies `favorites_only` in-memory |
+| `update_snippet.py` | Calls domain methods; re-extracts variables if body changed |
+| `delete_snippet.py` | Ownership guard then hard delete |
+| `toggle_favorite.py` | Calls `snippet.toggle_favorite()` and persists |
+
+`use_cases/ai/improve_snippet.py` depends on `IAIProvider` (also an ABC defined in the same file) — plug in any LLM provider by implementing that interface.
+
+#### DTOs (`dtos/`)
+
+Pydantic v2 models. `CreateSnippetDTO` / `UpdateSnippetDTO` are request bodies; `SnippetResponseDTO` is the API response (used with `model_validate(entity)`). `ListSnippetsFilterDTO` carries query-param filters with built-in validation.
+
+### Infrastructure layer (`src/infrastructure/`)
+
+#### API (`infrastructure/api/`)
+
+- **`routers/snippets.py`** — FastAPI router. Maps HTTP verbs to use cases. Catches domain exceptions and converts them to 404/403.
+- **`dependencies.py`** — FastAPI `Depends` wiring: `get_db` → session → `SQLAlchemySnippetRepository` → use case. To add a new use case, add a `get_<name>_uc` function here and inject it into the router.
+
+#### Persistence (`infrastructure/persistence/`)
+
+- **`models/snippet_model.py`** — SQLAlchemy mapped class (`SnippetModel`). Lists and UUIDs are stored as JSON strings.
+- **`repositories/snippet_repository.py`** — `SQLAlchemySnippetRepository` implements `ISnippetRepository`. Contains `_to_entity()` / `_to_model()` mappers that isolate ORM details from the domain.
+
+#### Config (`infrastructure/config/settings.py`)
+
+`pydantic-settings` reads from `.env`. Key settings: `database_url` (defaults to SQLite `penta.db`), `cors_origins`, `secret_key`.
+
+### Adding a new use case
+
+1. Add the method signature to `ports/input/snippet_service_port.py` (if using `ISnippetService`).
+2. Create `application/use_cases/<domain>/<action>.py` with a class that takes the needed port(s) in `__init__` and exposes `async execute(...)`.
+3. Add a `get_<action>_uc` factory in `infrastructure/api/dependencies.py`.
+4. Wire the route in the appropriate router file.
