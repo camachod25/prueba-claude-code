@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PENTA · AI Snippet Organizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #050E22; color: #E8EEFB; font-family: 'Manrope', system-ui, sans-serif; }
+  #root { width: 100%; height: 100%; }
+
+  /* Canvas backdrop: subtle penta brand glow */
+  .penta-canvas-bg {
+    position: fixed; inset: 0; z-index: -1;
+    background:
+      radial-gradient(900px 500px at 12% 8%, rgba(31,123,214,0.18) 0%, transparent 60%),
+      radial-gradient(900px 500px at 92% 92%, rgba(45,212,191,0.16) 0%, transparent 60%),
+      radial-gradient(700px 400px at 50% 50%, rgba(31,123,214,0.05) 0%, transparent 70%),
+      #050E22;
+  }
+  .penta-canvas-bg::after {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 30%, transparent 80%);
+  }
+</style>
+
+<!-- React + Babel -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- Data first (plain JS) -->
+<script src="data.js"></script>
+
+<!-- React components -->
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="app.jsx"></script>
+<script type="text/babel" src="screens.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+</head>
+
+<body>
+<div class="penta-canvas-bg"></div>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect } = React;
+
+const DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "dark",
+  "lang": "es",
+  "accent": "cyan",
+  "density": "comfy",
+  "device": "both"
+}/*EDITMODE-END*/;
+
+function PentaCanvas() {
+  const [t, setTweak] = useTweaks(DEFAULTS);
+  // The PentaApp accepts shared theme/lang. We map the tweak to it.
+  const [sharedUI, setSharedUI] = useState({ theme: t.theme, lang: t.lang });
+
+  // Sync tweak -> shared (when user toggles in tweaks panel)
+  useEffect(() => {
+    setSharedUI(s => ({ ...s, theme: t.theme, lang: t.lang }));
+  }, [t.theme, t.lang]);
+
+  // Sync shared -> tweak (when user toggles inside the app)
+  useEffect(() => {
+    if (sharedUI.theme !== t.theme) setTweak('theme', sharedUI.theme);
+    if (sharedUI.lang  !== t.lang)  setTweak('lang',  sharedUI.lang);
+  }, [sharedUI.theme, sharedUI.lang]);
+
+  // Accent color override
+  useEffect(() => {
+    const map = { cyan: '#2DD4BF', blue: '#1F7BD6', violet: '#7C5BFF', amber: '#F59E0B' };
+    document.documentElement.style.setProperty('--accent', map[t.accent] || '#2DD4BF');
+    const grad = {
+      cyan:   'linear-gradient(92deg, #1F7BD6 0%, #2DD4BF 100%)',
+      blue:   'linear-gradient(92deg, #1561B0 0%, #1F7BD6 100%)',
+      violet: 'linear-gradient(92deg, #1F7BD6 0%, #7C5BFF 100%)',
+      amber:  'linear-gradient(92deg, #F59E0B 0%, #2DD4BF 100%)',
+    };
+    document.documentElement.style.setProperty('--penta-grad', grad[t.accent] || grad.cyan);
+  }, [t.accent]);
+
+  const showDesktop = t.device === 'desktop' || t.device === 'both';
+  const showMobile  = t.device === 'mobile'  || t.device === 'both';
+
+  return (
+    <>
+      <DesignCanvas defaultPadding={64} bg="transparent">
+        <DCSection id="penta-snippet-app"
+                   title="PENTA · AI Snippet Organizer"
+                   subtitle="Hi-fi mockup · desktop + móvil · light & dark · ES/EN">
+          {showDesktop && (
+            <DCArtboard id="desktop" label="Desktop · 1440×900" width={1440} height={900}>
+              <div data-screen-label="Desktop" style={{ width: '100%', height: '100%' }}>
+                <PentaApp variant="desktop" sharedUI={sharedUI} setSharedUI={setSharedUI} />
+              </div>
+            </DCArtboard>
+          )}
+          {showMobile && (
+            <DCArtboard id="mobile" label="Mobile · 390×844" width={390} height={844}>
+              <div data-screen-label="Mobile" style={{
+                width: '100%', height: '100%',
+                borderRadius: 0, overflow: 'hidden',
+              }}>
+                <PentaApp variant="mobile" sharedUI={sharedUI} setSharedUI={setSharedUI} />
+              </div>
+            </DCArtboard>
+          )}
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Apariencia">
+          <TweakRadio label="Tema"
+            value={t.theme} onChange={v => setTweak('theme', v)}
+            options={[{label:'Oscuro', value:'dark'}, {label:'Claro', value:'light'}]} />
+          <TweakRadio label="Idioma"
+            value={t.lang} onChange={v => setTweak('lang', v)}
+            options={[{label:'Español', value:'es'}, {label:'English', value:'en'}]} />
+          <TweakSelect label="Color de acento"
+            value={t.accent} onChange={v => setTweak('accent', v)}
+            options={[
+              {label:'Cyan + Azul (default Penta)', value:'cyan'},
+              {label:'Azul profundo',               value:'blue'},
+              {label:'Azul + Violeta',              value:'violet'},
+              {label:'Ámbar + Cyan',                value:'amber'},
+            ]} />
+        </TweakSection>
+        <TweakSection title="Lienzo">
+          <TweakRadio label="Mostrar"
+            value={t.device} onChange={v => setTweak('device', v)}
+            options={[
+              {label:'Ambos', value:'both'},
+              {label:'Solo desktop', value:'desktop'},
+              {label:'Solo móvil', value:'mobile'},
+            ]} />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<PentaCanvas />);
+</script>
+
+</body>
+</html>

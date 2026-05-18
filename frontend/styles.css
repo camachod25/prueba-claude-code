@@ -1,0 +1,204 @@
+/* ============================================================
+   PENTA · AI Snippet Organizer — Design tokens & base styles
+   ============================================================ */
+
+:root {
+  /* Brand */
+  --penta-blue: #1F7BD6;
+  --penta-cyan: #2DD4BF;
+  --penta-grad: linear-gradient(92deg, #1F7BD6 0%, #2DD4BF 100%);
+  --penta-grad-soft: linear-gradient(135deg, rgba(31,123,214,0.14) 0%, rgba(45,212,191,0.14) 100%);
+  --accent: var(--penta-cyan);
+
+  /* Radii */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-pill: 999px;
+
+  /* Type */
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+/* DARK MODE (default for shell) */
+.theme-dark {
+  --bg:           #050E22;
+  --bg-grad:      radial-gradient(1200px 600px at 85% -10%, rgba(45,212,191,0.10) 0%, transparent 60%),
+                  radial-gradient(900px 500px at -10% 100%, rgba(31,123,214,0.12) 0%, transparent 55%),
+                  #050E22;
+  --surface:      #0B1733;
+  --surface-2:    #112149;
+  --surface-3:    #1A2D63;
+  --surface-hov:  #16285A;
+  --border:       rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.16);
+  --text:         #E8EEFB;
+  --text-muted:   #8A99C2;
+  --text-dim:     #5A6A93;
+  --text-inverse: #FFFFFF;
+  --shadow-card:  0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px rgba(0,0,0,0.32);
+  --shadow-pop:   0 24px 48px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.3);
+  --tag-bg:       rgba(45,212,191,0.10);
+  --tag-fg:       #6EE7CD;
+  --pill-bg:      rgba(255,255,255,0.06);
+  --code-bg:      #07112A;
+  --code-border:  rgba(255,255,255,0.06);
+}
+
+/* LIGHT MODE */
+.theme-light {
+  --bg:           #F5F8FE;
+  --bg-grad:      radial-gradient(1100px 600px at 90% -10%, rgba(45,212,191,0.18) 0%, transparent 55%),
+                  radial-gradient(900px 500px at -10% 105%, rgba(31,123,214,0.15) 0%, transparent 55%),
+                  #F5F8FE;
+  --surface:      #FFFFFF;
+  --surface-2:    #F0F4FC;
+  --surface-3:    #E2EAF8;
+  --surface-hov:  #EAF1FB;
+  --border:       rgba(10, 25, 60, 0.08);
+  --border-strong:rgba(10, 25, 60, 0.16);
+  --text:         #0A1B3D;
+  --text-muted:   #4F5E83;
+  --text-dim:     #8492B5;
+  --text-inverse: #FFFFFF;
+  --shadow-card:  0 1px 2px rgba(10,25,60,0.04), 0 8px 24px rgba(10,25,60,0.06);
+  --shadow-pop:   0 24px 48px rgba(10,25,60,0.18), 0 2px 8px rgba(10,25,60,0.08);
+  --tag-bg:       rgba(31,123,214,0.10);
+  --tag-fg:       #1561B0;
+  --pill-bg:      rgba(10,25,60,0.04);
+  --code-bg:      #0B1733;       /* code always dark for syntax */
+  --code-border:  rgba(255,255,255,0.06);
+}
+
+/* ─── Resets within app frames ─── */
+.penta-app, .penta-app * { box-sizing: border-box; }
+.penta-app {
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: var(--bg-grad);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+.penta-app button { font-family: inherit; }
+.penta-app input, .penta-app textarea { font-family: inherit; color: inherit; }
+
+/* ─── Scrollbar (slim, themed) ─── */
+.penta-app *::-webkit-scrollbar { width: 8px; height: 8px; }
+.penta-app *::-webkit-scrollbar-thumb {
+  background: var(--border-strong); border-radius: 999px;
+}
+.penta-app *::-webkit-scrollbar-track { background: transparent; }
+
+/* ─── Reusable primitives ─── */
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--pill-bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: var(--tag-bg);
+  color: var(--tag-fg);
+  letter-spacing: 0.01em;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--pill-bg);
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.chip:hover { background: var(--surface-hov); color: var(--text); }
+.chip.active {
+  background: var(--penta-grad);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(31,123,214,0.32);
+}
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 13px; font-weight: 600;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--surface-hov); border-color: var(--border-strong); }
+.btn.btn-primary {
+  background: var(--penta-grad);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 8px 20px -8px rgba(31,123,214,0.6);
+}
+.btn.btn-primary:hover { filter: brightness(1.06); }
+.btn.btn-ghost { background: transparent; border-color: transparent; color: var(--text-muted); }
+.btn.btn-ghost:hover { color: var(--text); background: var(--surface-hov); }
+.btn.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+}
+
+/* ─── Brand wordmark via CSS gradient ─── */
+.penta-wordmark {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  background: var(--penta-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ─── Animated gradient stroke (used on AI elements) ─── */
+@keyframes pentaShimmer {
+  0%   { background-position:   0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.ai-glow {
+  background: linear-gradient(90deg, #1F7BD6, #2DD4BF, #1F7BD6, #2DD4BF);
+  background-size: 200% 100%;
+  animation: pentaShimmer 6s linear infinite;
+}
+
+/* ─── Mobile bottom-safe area when frame is mobile ─── */
+.penta-app.is-mobile { font-size: 14px; }
+
+/* Page transitions (kept minimal — animations can stall inside scaled artboards) */
+.page-fade { opacity: 1; }
