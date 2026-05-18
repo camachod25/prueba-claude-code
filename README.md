@@ -12,13 +12,10 @@ prueba-claude-code/
 
 ## Requisitos previos
 
-- Node.js >= 18
-- Python >= 3.10
-- npm o yarn
+- Python >= 3.12
+- Node.js no requerido — el frontend es un prototipo estático sin bundler
 
-## Instalación
-
-### Backend
+## Backend
 
 ```bash
 cd backend
@@ -28,16 +25,28 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-### Frontend
+### Tests
+
+```bash
+pytest                    # todos los tests
+pytest tests/unit         # solo unitarios
+pytest tests/integration  # solo integración
+```
+
+## Frontend
+
+El frontend no tiene build step. Sirve la carpeta con cualquier servidor estático:
 
 ```bash
 cd frontend
-npm install
-npm run dev
+python3 -m http.server 8080
 ```
 
-## Desarrollo
+## URLs
 
-- Backend corre en: `http://localhost:8000`
-- Frontend corre en: `http://localhost:5173`
-- Documentación de la API: `http://localhost:8000/docs`
+| Servicio | URL |
+|---|---|
+| Frontend | http://localhost:8080 |
+| Backend | http://localhost:8000 |
+| Docs API (Swagger) | http://localhost:8000/docs |
+| Docs API (ReDoc) | http://localhost:8000/redoc |
